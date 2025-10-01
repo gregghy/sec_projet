@@ -1,7 +1,8 @@
 
-### Group A
+### Group C
 Silvestri
 Gatti
 DE SOUZA
 Castillo Thibaut
+ANDRE Lia
 
