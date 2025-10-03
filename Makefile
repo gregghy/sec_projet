@@ -1,0 +1,24 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -g
+
+UTILS_OBJ = utils.o
+
+.PHONY: all clean
+
+all: clean server client
+
+# Serveur Python : on copie le script et on le rend exécutable
+server: server.py
+	@cp $< $@
+	@chmod +x $@
+
+# Client C, toujours compilé avec utils.o
+$(UTILS_OBJ): utils.c protocol.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+client: client.c $(UTILS_OBJ) protocol.h
+	$(CC) $(CFLAGS) client.c $(UTILS_OBJ) -o $@
+
+clean:
+	rm -f server client $(UTILS_OBJ)
+#	rm -r __pycache__/
