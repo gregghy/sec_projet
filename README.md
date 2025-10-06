@@ -1,2 +1,9 @@
-Group C
-Silvestri Gatti DE SOUZA Castillo Thibaut ANDRE Lia
+
+### Group C
+Silvestri <br>
+Gatti <br>
+DE SOUZA <br>
+Castillo Thibaut <br>
+ANDRE Lia <br>
+MAICHEN Alex <br>
+
