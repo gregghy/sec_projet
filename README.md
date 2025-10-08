@@ -1,4 +1,3 @@
-
 ### Group C
 Silvestri
 Gatti
