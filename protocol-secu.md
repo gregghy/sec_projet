@@ -22,24 +22,25 @@ srv: HELLO <pseudo> | ERROR <code>
 ## Gestion des enchères
 clt: CREATE <auction_id> <min_price> <increment> <duration>
 srv: OKAY! <auction_id>
-srv: CREATE <pseudo> <auction_id> <min_price> <increment> <duration_sec>  # broadcast
+src: START <auction_id> <bid> <increment> <duration>
+srv: BROADC <pseudo> <auction_id> <min_price> <increment> <duration_sec>  # broadcast
 
 clt: LSAUC                              # Liste toutes les enchères actives
 srv: LSAUC <nb>
-srv: <auction> <current_bid> <time_left> <nb_bidders>  # répété <nb> fois
+srv: <auction> <current_bid> <time_left> <nb_bidders>  # répété nb fois
 
 clt: ENTER <auction_id>
 srv: OKAY!
-srv: STATE <auction_id> <current_bid> <time_left>  # État actuel
+srv: BROADC <auction_id> <current_bid> <time_left>  # État actuel
 
-clt: OFFRE <auction_id> <amount>           # Contexte explicite
+clt: OFFER <auction_id> <amount>           # Contexte explicite
 srv: OKAY!
-srv: BID <pseudo> <amount> <auction_id>    # broadcast si nouvelle meilleure offre
+srv: BROADC <pseudo> <amount> <auction_id>    # broadcast si nouvelle meilleure offre
 
 ## Fin d'enchère automatique
-srv: WARN <auction> <seconds_left>      # 60s, 30s, 10s avant la fin
-srv: WIN <pseudo> <amount> <auction>    # Un gagnant
-srv: END <auction> NO_BIDS              # Aucune offre
+srv: BROADC <auction> <seconds_left>      # 60s, 30s, 10s avant la fin
+srv: BROADC <pseudo> <realname> <amount> <auction_id>    # Un gagnant
+srv: END <auction_id>                     # Aucune offre
 
 ## Codes d'erreur
 ERROR 30 : nom d'enchère invalide
