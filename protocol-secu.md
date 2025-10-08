@@ -9,7 +9,10 @@
 - Durée: entier en secondes (≥1)
 
 ## États
-- CONNECTED → AUTHENTICATED → IN_AUCTION
+- CONNECTED: first connection, receive login request
+- AUTHENTICATED: login request satisfied
+- LISTING X: selling X through an auction 
+- OFFERING TO X: making an offer for X 
 
 ## Connexion
 srv: BIDS 1.1
@@ -17,22 +20,21 @@ clt: HELLO <pseudo> <password>          # Temporaire, sera hashé en v2
 srv: HELLO <pseudo> | ERROR <code>
 
 ## Gestion des enchères
-clt: CREAT <auction> <min_price> <increment> <duration>
+clt: CREATE <auction_id> <min_price> <increment> <duration>
 srv: OKAY! <auction_id>
-srv: CREAT <pseudo> <auction> <min_price> <increment> <duration_sec>  # broadcast
+srv: CREATE <pseudo> <auction_id> <min_price> <increment> <duration_sec>  # broadcast
 
 clt: LSAUC                              # Liste toutes les enchères actives
 srv: LSAUC <nb>
 srv: <auction> <current_bid> <time_left> <nb_bidders>  # répété <nb> fois
 
-clt: ENTER <auction>
+clt: ENTER <auction_id>
 srv: OKAY!
-srv: STATE <auction> <current_bid> <leader> <time_left>  # État actuel
-srv: ENTER <pseudo> <auction>           # broadcast
+srv: STATE <auction_id> <current_bid> <time_left>  # État actuel
 
-clt: OFFRE <auction> <amount>           # Contexte explicite
+clt: OFFRE <auction_id> <amount>           # Contexte explicite
 srv: OKAY!
-srv: BID <pseudo> <amount> <auction>    # broadcast si nouvelle meilleure offre
+srv: BID <pseudo> <amount> <auction_id>    # broadcast si nouvelle meilleure offre
 
 ## Fin d'enchère automatique
 srv: WARN <auction> <seconds_left>      # 60s, 30s, 10s avant la fin
