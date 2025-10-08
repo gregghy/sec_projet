@@ -50,7 +50,4 @@ ERROR 38 : offre trop basse (< current_bid + increment)
 ERROR 39 : enchère terminée
 ERROR 40 : pseudo invalide
 ERROR 41 : pseudo déjà pris
-
-
-
-
+ERROR 42 : enchère n'a pas pu être authentifiée
