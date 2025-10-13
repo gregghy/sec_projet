@@ -107,7 +107,7 @@ class RSA():
 		return us
 
 	# sign message (pre_encryption)
-	# usage: (private key, message to sign)
+	# usage: (message to sign)
 	def sign(self, s: int) -> tuple[int, int]:
 		priv_d, n = self.private
 		s_bytes = int.to_bytes(s, (s.bit_length() + 7) // 8, 'big')
