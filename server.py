@@ -3,30 +3,31 @@ import socket
 import selectors
 import sys
 import re
+import hashlib # for hashing passwords later. probably use sha256.
 import time
 
-MAX_LINE = 256
+MAX_LINE: int = 256
 
 class User:
-    def __init__(self, sock):
-        self.sock = sock
+    def __init__(self, sock: socket.socket, username: str = "") -> None:
+        self.sock: socket.socket = sock
         self.addr = sock.getpeername()
-        self.pseudo = ''
-        self.authenticated = False
+        self.pseudo: str = username
+        self.authenticated: bool = False
 
-users = []
-sel = selectors.DefaultSelector()
-buf = {}  # Buffers pour chaque socket
+users: list[User] = []
+sel: selectors.DefaultSelector = selectors.DefaultSelector()
+buf: dict[socket.socket, str] = {}  # Buffers pour chaque socket
 
-def send_line(sock, msg, *args):
+def send_line(sock: socket.socket, msg: str, *args) -> None:
     """Envoie une ligne au client"""
-    line = (msg % args if args else msg) + '\n'
+    line: str = (msg % args if args else msg) + '\n'
     try:
         sock.sendall(line.encode())
     except (BrokenPipeError, OSError):
         pass
 
-def accept_wrapper(lsock):
+def accept_wrapper(lsock) -> None:
     """Accepte une nouvelle connexion"""
     conn, addr = lsock.accept()
     conn.setblocking(False)
@@ -35,7 +36,7 @@ def accept_wrapper(lsock):
     print(f"Nouvelle connexion {addr}")
     send_line(conn, "BIDS 1.0")  # Message de bienvenue
 
-def disconnect(sock):
+def disconnect(sock: socket.socket) -> None:
     """Déconnecte un client"""
     try:
         addr = sock.getpeername()
@@ -57,26 +58,26 @@ def disconnect(sock):
         pass
     buf.pop(sock, None)
 
-def broadcast(msg, *args, exclude=None):
+def broadcast(msg: str, *args, exclude = None) -> None:
     """Envoie un message à tous les utilisateurs connectés"""
     for u in users:
         if u.sock is not exclude:
             send_line(u.sock, msg, *args)
 
-def find_user(sock):
+def find_user(sock: socket.socket) -> User | None:
     """Trouve l'utilisateur correspondant à une socket"""
     for u in users:
         if u.sock == sock:
             return u
     return None
 
-def handle_command(sock, line):
+def handle_command(sock: socket.socket, line: str) -> None:
     """Traite une commande reçue d'un client"""
-    u = find_user(sock)
+    u: User | None = find_user(sock)
     
     # HELLO <pseudo> [<password>] : authentification
     if line.startswith('HELLO '):
-        parts = line[6:].split()
+        parts: list[str] = line[6:].split()
         if len(parts) < 1:
             return send_line(sock, "ERROR 40 pseudo invalide")
         
@@ -134,7 +135,7 @@ def handle_command(sock, line):
     # Commande inconnue
     send_line(sock, "ERROR 11 commande inexistante")
 
-def handle_socket(sock):
+def handle_socket(sock) -> None:
     """Traite les données reçues d'une socket"""
     try:
         data = sock.recv(4096).decode()
@@ -151,7 +152,7 @@ def handle_socket(sock):
     # Traite toutes les lignes complètes dans le buffer
     while sock in buf and '\n' in buf[sock]:
         line, buf[sock] = buf[sock].split('\n', 1)
-        line = line.strip()
+        line: str = line.strip()
         if line:
             handle_command(sock, line)
 
@@ -160,7 +161,7 @@ if __name__ == '__main__':
         print(f"Usage: {sys.argv[0]} <port>")
         sys.exit(1)
     
-    port = int(sys.argv[1])
+    port: int = int(sys.argv[1])
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

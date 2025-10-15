@@ -1,0 +1,145 @@
+Ce document est temporaire et amené à être modifié
+Voici un échantillon de la structure utilisée dans ce document, incluant les conventions de nomenclatures utilisées:
+
+----
+  Version numéro de version: Etat
+  - Modification par rapport à la précédente version
+  -- Note sur la priorité pour la version suivante
+----
+
+Classe
+  nomAttribut: type
+
+  nomFonction(premiere_variable: type, deuxieme_variable: type = valeur par défaut): type retour
+    - spécification à propos de la fonction
+      -- cas particulier de la spécification précédente
+      -- cas particulier de la spécification précédente
+    - spécification à propos de la fonction # Nom de l'auteur: Note, observation, commentaire sur une ligne #
+
+  // fonction ou attribut dont l'utilité ou la position est incertaine
+
+****
+  Nom de l'auteur : Notes, observations, commentaires
+  sur plusieurs lignes
+  Nom de l'auteur: Notes, observations, commentaires
+  sur plusieurs lignes
+****
+__________________________________________________________________
+
+****
+  Lia: S'il vous plaît, suivez les conventions au dessus, et maintenez bien ce document. Je sais que ça paraît énorme comme demande, mais ça nous permettra d'être clairs, et de ne pas attendre sur le travail d'untel pour faire le notre.
+  Sans oublier que ce sera utile pour le rapport.
+****
+
+----
+  Version 0.1: Version brouillon
+    -- Cruel manque des parties réseau et base de données
+    -- Nombreux points à éclaircir
+----
+
+----
+  Version 0.2: Version brouillon sans vulnerabilités évidentes
+    -- modification de la classe client: le hashage du mot de passe est essentiel pour éviter les vulnerabilités
+----
+
+Client
+  nom: string
+  motDePasse: int (hashed from (password + some other string) string using sha256, as seen in the RSA.py module)
+  clePublique: int
+  meilleureEnchere: float
+
+****
+  Lia: Comme on veut que le client reste anonyme, je pensais à une liste qui assoicierait l'identifiant d'une enchère à un mot aléatoire hashé. On ajouterai ça aux attributs du client.
+  Questions, est-ce qu'on gère ça dans la classe client directement ? comment nommer cet attribut ? est-ce un tuple ou un autre objet ?
+****
+
+  new Client(n: string, mdp: int, c: int): void
+
+  // genererCle(): string
+  
+  authentification(): void
+    - demande un nom au client
+    - demande un mot de passe au client
+    - envoie la demande d'authentification au serveur
+    - gère la réponse reçue
+      -- si connexion établie, afficher "Bonjour " + nom
+      -- sinon, gérer l'erreur
+  
+  proposeEnchere(enchere_id): void
+    - demande le prix proposé au client
+    - envoie la proposition au serveur
+    - gère la réponse reçue
+      -- si enchère établie, afficher "Votre enchère a été enregistrée"
+      -- sinon, gérer l'erreur
+
+  consulteEncheresGeneral(): void
+    - envoie une demande de la liste des enchères en cours au serveur
+    - gère la réponse reçue
+      -- si liste vide reçue, afficher "Il n'y aucune d'enchère en cours"
+      -- sinon, si liste reçue, afficher les enchères
+      -- sinon, gérer l'erreur
+
+  consulteEncheresRemportees(): void
+    - envoie une demande de la liste des enchères emportées par ce client
+    - gère la réponse reçue
+      -- si liste vide reçue, afficher "Vous n'avez pas remporté d'enchères"
+      -- sinon, si liste reçue, afficher les enchères
+      -- sinon, gérer l'erreur
+
+  afficheGagnant(enchere: Enchere # Lia: ou un string formaté #): void
+    - affiche l'enchère # Lia: popup? #
+
+  verifiesMDPDansBDD:(password: int, database: dict[string, int]): bool
+
+  formatClient(): string
+    - renvoie les informations du client sous la forme "nom: cle".
+
+Serveur
+  clients: Client list
+  encheresEnCours: Enchere list
+  encheresFinies : Enchere list
+  // nbEncheres: int # Lia: Pour ne pas avoir à vérifier à chaque enchère quel sera son identifiant #
+
+  new Serveur(): void
+
+  ajouteEnchere(enchere: Enchere): void
+
+  reveleGagnant(enchere_id: int): void
+    - recupère l'enchère correspondant à enchere_id
+    - récupère les informations du gagnant et les modifie dans l'enchère (passe d'un gagnant anonyme à publique)
+    - envoie l'enchère à tous les membres de clients
+
+  clotEnchere(enchere_id: int): void
+    # Lia: est-ce qu'on vérifie que l'enchère correspondant à enchere_id est terminée (timer à 0) ici ? #
+    # Alex: puisque timer sera probablement une variable de type float, vaut mieux faire un <= 0. il suffit de vérifier l'état de l'enchère lorsqu'une enchère est faite par un client, et autrement toutes les 5 secondes environ (chrono qui se remet à 5 lorsqu'il s'écoule) #
+    - déplace une enchère de encheresEnCours à encheresFinies
+
+  propositionEnchere(enchere_id: int, prix: int, client_hash: string): void
+    - vérifie que l'enchère avec enchere_id est valide
+    - vérifie que le prix proposé soit supérieur au prix courant
+      -- si supérieur, actualise le client gagnant
+    - envoie un message de confirmation ou d'erreur au client
+
+  listeEncheresEnCours(): list[Enchere]
+
+  ajouteClient(client: Client): void
+    - crée le client
+    # Lia: Comment on gère la clé du client ? #
+    # Alex: hashé avec sha256 comme le mdp. sinon il suffit d'avoir accès au serveur pour avoir accès à toutes les données sur les enchères #
+
+  ajouteEnchere()
+
+Enchere
+  id: int
+  nom: string
+  prix: int # Lia: Le prix à l'initialisation est le prix de départ. Il devient ensuite le prix de la meilleure enchère #
+  temps: Timer # Lia: Dépendant du langage, la gestion du temps sera différente. En revanche, je propose qu'on gère les effets (le temps écoulé) dans Enchere directement. A voir la nécessité d'un message réseau pour signifier la fin d'une enchère #
+  meilleurCandidat: string
+
+  new Enchere(enchere_id: int, n: string, p: int, t: Timer): void
+    - Le meilleur candidat est initialisé au string (aucun candidat).
+
+  actualiseEnchere(p: int, candidat: string): void
+
+  toString(): string
+    - Envoie l'enchère sous la forme (id)Nom. \nMeilleure enchère: prix par meilleurCandidat
