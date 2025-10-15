@@ -1,5 +1,7 @@
 # Protocole d'enchères (v1.1)
 
+# TODO : gérer les erreurs et me relire svp
+
 ## Format général
 - UTF‑8, une commande par ligne, terminée par "\n"
 - Champs séparés par un espace
@@ -50,6 +52,7 @@ srv: ENTER <pseudo> <auction_id>  # broadcast
 clt: OFFRE <auction_id> <amount>
 srv: OKAY!
 srv: BID <pseudo_anonymous> <amount> <auction_id>  # broadcast si meilleure offre / Note: pseudo_anonymous est un hash pour l'anonymat jusqu'à la fin de l'enchère
+srv : BID ERROR 38 | ERROR 39 | ERROR 40 si offre trop basse ou enchère terminée
 
 ### Consultation des enchères remportées avec consulteEncheresRemportees()
 clt: WHOWIN
