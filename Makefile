@@ -13,10 +13,10 @@ server: server.py
 	@chmod +x $@
 
 # Client C, toujours compilé avec utils.o
-$(UTILS_OBJ): utils.c protocol.h
+$(UTILS_OBJ): utils.c protocole.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-client: client.c $(UTILS_OBJ) protocol.h
+client: client.c $(UTILS_OBJ) protocole.h
 	$(CC) $(CFLAGS) client.c $(UTILS_OBJ) -o $@
 
 clean:
