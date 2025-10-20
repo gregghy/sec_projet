@@ -147,6 +147,7 @@ def handle_command(sock: socket.socket, line: str) -> None:
     if line == 'ENTER':
         send_line("TODO entrer dans enchère")
         return
+    
     if line == 'BID':
         send_line("TODO faire une offre")
         return
