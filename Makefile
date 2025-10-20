@@ -12,12 +12,18 @@ server: server.py
 	@cp $< $@
 	@chmod +x $@
 
-# Client C, toujours compilé avec utils.o
-$(UTILS_OBJ): utils.c protocole.h
-	$(CC) $(CFLAGS) -c $< -o $@
+# Client C : toujours compilé avec utils.o
+#$(UTILS_OBJ): utils.c protocole.h
+#	$(CC) $(CFLAGS) -c $< -o $@
 
-client: client.c $(UTILS_OBJ) protocole.h
-	$(CC) $(CFLAGS) client.c $(UTILS_OBJ) -o $@
+#client: client.c $(UTILS_OBJ) protocole.h
+#	$(CC) $(CFLAGS) client.c $(UTILS_OBJ) -o $@
+
+# Client Python : on copie le script et on le rend exécutable
+client: client.py
+	@cp $< $@
+	@chmod +x $@
+
 
 clean:
 	rm -f server client $(UTILS_OBJ)

@@ -34,7 +34,7 @@ def accept_wrapper(lsock) -> None:
     sel.register(conn, selectors.EVENT_READ, data=True)
     buf[conn] = ''
     print(f"Nouvelle connexion {addr}")
-    send_line(conn, "BIDS 1.0")  # Message de bienvenue
+    send_line(conn, "BIDS 1.1.1 , HELP for help")  # Message de bienvenue
 
 def disconnect(sock: socket.socket) -> None:
     """Déconnecte un client"""
@@ -108,6 +108,14 @@ def handle_command(sock: socket.socket, line: str) -> None:
     # Vérification de l'authentification pour les commandes suivantes
     if not u or not u.authenticated:
         return send_line(sock, "ERROR 20 non authentifié")
+    
+    # Help
+    if line == 'HELP':
+        send_line(sock, "HELP commandes disponibles :")
+        send_line(sock, "  SPEAK <msg> : envoyer un message")
+        send_line(sock, "  LSMEM : lister les utilisateurs connectés")
+        send_line(sock, "  LEAVE : se déconnecter")
+        return
     
     # SPEAK <msg> : message de chat
     if line.startswith('SPEAK '):
