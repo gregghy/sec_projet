@@ -1,5 +1,5 @@
-#ifndef PROTOCOL_H
-#define PROTOCOL_H
+#ifndef PROTOCOLE_H
+#define PROTOCOLE_H
 
 #include <stdarg.h>
 
