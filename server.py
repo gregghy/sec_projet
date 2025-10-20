@@ -114,6 +114,10 @@ def handle_command(sock: socket.socket, line: str) -> None:
         send_line(sock, "HELP commandes disponibles :")
         send_line(sock, "  SPEAK <msg> : envoyer un message")
         send_line(sock, "  LSMEM : lister les utilisateurs connectés")
+        send_line(sock, "  CREAT : créer une enchère")
+        send_line(sock, "  LSAUC : lister les enchères")
+        send_line(sock, "  ENTER : entrer dans une enchère")
+        send_line(sock, "  BID : faire une offre")
         send_line(sock, "  LEAVE : se déconnecter")
         return
     
@@ -131,6 +135,22 @@ def handle_command(sock: socket.socket, line: str) -> None:
             send_line(sock, "%s", user.pseudo)
         print(f"LSMEM demandé par {u.pseudo}")
         return
+    
+    if line == 'CREAT':
+        send_line("TODO création enchère")
+        return
+    
+    if line == 'LSAUC':
+        send_line("TODO liste enchères")
+        return
+
+    if line == 'ENTER':
+        send_line("TODO entrer dans enchère")
+        return
+    if line == 'BID':
+        send_line("TODO faire une offre")
+        return
+    
     
     # LEAVE : déconnexion
     if line == 'LEAVE':

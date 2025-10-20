@@ -27,7 +27,7 @@ clt: AUTH <hmac_int>
 srv: HELLO <pseudo> | ERROR 42
 
 ### Déconnexion
-clt: BYE
+clt: LEAVE
 srv: OKAY!
 
 ## Gestion des enchères

@@ -1,8 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 
-UTILS_OBJ = utils.o
-
 .PHONY: all clean
 
 all: clean server client
