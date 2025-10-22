@@ -105,3 +105,13 @@ ERROR 43: clé publique invalide (si utilisée)
 ERROR 45: trop de requêtes (rate limit)
 ERROR 47: version non supportée
 ERROR 48: erreur interne
+
+## Technos
+- Web : React
+- Serveur/Client : Flask,Python
+- Data : JSON, Socket
+
+## Possibles Vulnerabilites
+- DDOS (enchere, chat)
+- Brut Force
+- Login
