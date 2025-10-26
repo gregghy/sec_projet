@@ -8,7 +8,7 @@ import hashlib # for hashing passwords later. probably use sha256.
 import time
 
 MAX_LINE: int = 256
-PING_INTERVAL: float = 30.0
+PING_INTERVAL: float = 15.0
 MAX_MISSED_PINGS: int = 5
 
 class User:

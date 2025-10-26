@@ -5,6 +5,11 @@ import select
 import RSA
 import hashlib # for hashing passwords later. probably use sha256.
 import time
+import signal
+
+# Ignore Ctrl+C (SIGINT) and Ctrl+Z (SIGTSTP)
+signal.signal(signal.SIGINT, signal.SIG_IGN)
+signal.signal(signal.SIGTSTP, signal.SIG_IGN)
 
 MAX_PSEUDO = 16
 MAX_LINE = 256
