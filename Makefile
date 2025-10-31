@@ -18,4 +18,6 @@ client: client.py
 
 clean:
 	rm -f server client $(UTILS_OBJ)
-#	rm -r __pycache__/
+
+clean_pycache:
+	rm -r __pycache__/
