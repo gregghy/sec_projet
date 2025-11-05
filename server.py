@@ -8,6 +8,8 @@ import hashlib # for hashing passwords later. probably use sha256.
 import time
 
 MAX_LINE: int = 256
+PING_INTERVAL: float = 15.0
+MAX_MISSED_PINGS: int = 5
 
 class User:
     def __init__(self, sock: socket.socket, username: str, password) -> None:
@@ -17,6 +19,8 @@ class User:
         self.password: int = password
         self.authenticated: bool = False
         self.AESkey: int = 0 #TODO
+        self.last_activity: float = time.time()
+        self.missed_pings: int = 0
 
 users: list[User] = []
 sel: selectors.DefaultSelector = selectors.DefaultSelector()
@@ -80,8 +84,10 @@ def find_user(sock: socket.socket) -> User | None:
 
 def handle_command(sock: socket.socket, line: str) -> None:
     """vérifie les enchères disponibles et traite une commande reçue d'un client"""
+    global time_at_last_check
     now: float = time.time()
     dt: float = now - time_at_last_check
+    time_at_last_check = now
     # contrary to how it might appear given the name, the float imprecision implementation will not be a major problem until over 40000 years, because python uses double-precision (64 bits) for its "float" type
     # https://stackoverflow.com/questions/52064050/what-is-the-precision-in-decimal-points-of-python-floats
     
@@ -91,9 +97,27 @@ def handle_command(sock: socket.socket, line: str) -> None:
         auction_timers[id] -= dt
 
         if auction_timers[id] <= 0:
-            to_ignore.add(auction_id) # if it's already in to_ignore anyway, because every element in a set is unique, nothing happens here
+            #to_ignore.add(auction_id) # if it's already in to_ignore anyway, because every element in a set is unique, nothing happens here
+            to_ignore.add(id) # if it's already in to_ignore anyway, because every element in a set is unique, nothing happens here
 
     u: User | None = find_user(sock)
+
+    if u:
+        u.last_activity = now
+        u.missed_pings = 0
+
+    # PING <ts> : keep-alive (autorisé même si non authentifié)
+    if line.startswith('PING'):
+        parts = line.split()
+        if len(parts) != 2:
+            send_line(sock, "ERROR 10 invalid syntax")
+            return
+        ts = parts[1]
+        if u:
+            u.last_activity = now
+            u.missed_pings = 0
+        send_line(sock, "PONG %s", ts)
+        return
     
     # HELLO <pseudo> <password> : authentification
     if line.startswith('HELLO '):
@@ -148,6 +172,7 @@ def handle_command(sock: socket.socket, line: str) -> None:
         send_line(sock, "  LSAUC: list all running auctions")
         send_line(sock, "  ENTER: enter an auction")
         send_line(sock, "  BID: make a bid for a given auction")
+        send_line(sock, "  PING <ts>: keep-alive, server replies PONG <ts>")
         send_line(sock, "  LEAVE: disconnect")
         return
     
@@ -222,6 +247,19 @@ def handle_socket(sock) -> None:
         if line:
             handle_command(sock, line)
 
+def check_keepalive() -> None:
+    """Déconnecte les clients après 5 PING manqués."""
+    now = time.time()
+    for u in list(users):
+        elapsed = now - getattr(u, "last_activity", now)
+        missed = int(elapsed // PING_INTERVAL)
+        if missed > u.missed_pings:
+            u.missed_pings = missed
+            if u.missed_pings >= MAX_MISSED_PINGS:
+                send_line(u.sock, "ERROR 30 timeout")
+                print(f"Timeout: disconnecting {u.pseudo} ({u.addr})")
+                disconnect(u.sock)
+
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <port>")
@@ -240,10 +278,12 @@ if __name__ == '__main__':
         
         try:
             while True:
-                for key, _ in sel.select():
+                events = sel.select(timeout = 1.0)
+                for key, _ in events:
                     if key.data is None:
                         accept_wrapper(key.fileobj)
                     else:
                         handle_socket(key.fileobj)
+                check_keepalive()
         except KeyboardInterrupt:
             print("\nArrêt du serveur")

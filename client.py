@@ -4,6 +4,12 @@ import sys
 import select
 import RSA
 import hashlib # for hashing passwords later. probably use sha256.
+import time
+import signal
+
+# Ignore Ctrl+C (SIGINT) and Ctrl+Z (SIGTSTP)
+signal.signal(signal.SIGINT, signal.SIG_IGN)
+signal.signal(signal.SIGTSTP, signal.SIG_IGN)
 
 MAX_PSEUDO = 16
 MAX_LINE = 256
@@ -63,11 +69,24 @@ def main() -> int:
     
     # Envoi de l'authentification
     send_line(fd, "HELLO %s", pseudo)
+    # Envoi d'un PING initial pour vérifier la connexion
+    try:
+        ts0 = str(int(time.time()))
+        send_line(fd, "PING %s", ts0)
+    except OSError:
+        print("503: Failed to send initial PING.")
+        fd.close()
+        return 1
 
     
     # Boucle principale
+    last_ping: float = time.time()
+    PING_INTERVAL: float = 30.0  # secondes
     while True:
-        readable, _, _ = select.select([sys.stdin, fd], [], [])
+        # timeout dynamique pour envoyer des PING périodiques
+        now = time.time()
+        timeout = max(0.0, last_ping + PING_INTERVAL - now)
+        readable, _, _ = select.select([sys.stdin, fd], [], [], timeout)
         
         # Entrée utilisateur
         if sys.stdin in readable:
@@ -85,6 +104,17 @@ def main() -> int:
                 print("503: Server unavailable.")
                 break
             print(msg)
+
+        # Envoi périodique du keep-alive PING <ts>
+        now = time.time()
+        if now - last_ping >= PING_INTERVAL:
+            ts = str(int(now))
+            try:
+                send_line(fd, "PING %s", ts)
+                last_ping = now
+            except OSError:
+                print("503: Failed to send PING.")
+                break
     
     fd.close()
     return 0
