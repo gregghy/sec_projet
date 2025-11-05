@@ -14,7 +14,7 @@
 - **Python Scripts**
 
 
-## 3. System Architecture
+## System Architecture
 
 ```
 Browser (React)  ⇄  FastAPI Python Server  ⇄  data.json
@@ -28,7 +28,7 @@ Browser (React)  ⇄  FastAPI Python Server  ⇄  data.json
 
 ---
 
-## 4. Data Storage Format
+## Data Storage Format
 
 All persistent information is stored in JSON files.
 
@@ -56,7 +56,7 @@ All persistent information is stored in JSON files.
 ```
 
 
-## 5. Communication Protocol
+## Communication Protocol
 
 All messages between client and server travel through:
 - **REST API** (HTTP)
@@ -64,7 +64,7 @@ All messages between client and server travel through:
 
 ---
 
-### 5.1 User Operations
+### User Operations
 
 ### **Register**
 
@@ -113,7 +113,7 @@ POST /login
 
 ---
 
-### 5.2 Auction Operations
+### Auction Operations
 
 ### **List Active Auctions**
 
@@ -230,7 +230,7 @@ Content-Type: application/json
 
 ---
 
-### 5.3 Real-Time Updates (WebSocket)
+### Real-Time Updates (WebSocket)
 
 Clients connect to:
 ```
@@ -251,7 +251,7 @@ When a bid is placed, the server broadcasts a message to all connected clients.
 ```
 
 
-## 6. Security and Trust
+## Security and Trust
 
 | Concept | Description |
 |----------|--------------|
@@ -262,7 +262,7 @@ When a bid is placed, the server broadcasts a message to all connected clients.
 
 ---
 
-## 7. Protocol Requests
+## Protocol Requests
 
 1. User registers → `POST /register`  
 2. User logs in → `POST /login`  
