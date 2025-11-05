@@ -7,9 +7,15 @@ import hashlib # for hashing passwords later. probably use sha256.
 import time
 import signal
 
-# Ignore Ctrl+C (SIGINT) and Ctrl+Z (SIGTSTP)
-signal.signal(signal.SIGINT, signal.SIG_IGN)
-signal.signal(signal.SIGTSTP, signal.SIG_IGN)
+if sys.platform == "linux":
+    # Ignore Ctrl+C (SIGINT) and Ctrl+Z (SIGTSTP)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGTSTP, signal.SIG_IGN)
+
+if sys.platform == "win32":
+    signal.signal(signal.CTRL_BREAK_EVENT, signal.SIG_IGN)
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    signal.signal(signal.CTRL_C_EVENT, signal.SIG_IGN)
 
 MAX_PSEUDO = 16
 MAX_LINE = 256
