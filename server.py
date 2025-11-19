@@ -25,10 +25,26 @@ class User:
 users: list[User] = []
 sel: selectors.DefaultSelector = selectors.DefaultSelector()
 buf: dict[socket.socket, str] = {}  # Buffers pour chaque socket
-all_auctions: dict[int, list[tuple[socket.socket, int]]] = {} # {auction_id: [(socket, bid_in_cents), ...], ...}
+# Dictionnaire des enchères qui sont en cours
+class Auction:
+    def __init__(self, id: int, name: str, min_price: int, increment: int, duration: int, creator: User):
+        self.id = id
+        self.name = name
+        self.min_price = min_price
+        self.increment = increment
+        self.duration = duration
+        self.creator = creator
+        self.current_bid: int = 0
+        self.leader: User | None = None
+        self.participants: set[User] = set()
+        self.start_time: float = time.time()
+
+    def get_time_left(self) -> int:
+        elapsed = time.time() - self.start_time
+        return max(0, int(self.duration - elapsed))
+
+auctions: dict[int, Auction] = {}
 auction_id: int = 0 # increment by 1 for each auction started
-auction_timers: dict[int, float] = {} # {auction_id: time_remaining, ...}
-time_at_last_check: float = time.time()
 
 def send_line(sock: socket.socket, msg: str, *args) -> None:
     """Envoie une ligne au client"""
@@ -84,26 +100,11 @@ def find_user(sock: socket.socket) -> User | None:
 
 def handle_command(sock: socket.socket, line: str) -> None:
     """vérifie les enchères disponibles et traite une commande reçue d'un client"""
-    global time_at_last_check
-    now: float = time.time()
-    dt: float = now - time_at_last_check
-    time_at_last_check = now
-    # contrary to how it might appear given the name, the float imprecision implementation will not be a major problem until over 40000 years, because python uses double-precision (64 bits) for its "float" type
-    # https://stackoverflow.com/questions/52064050/what-is-the-precision-in-decimal-points-of-python-floats
     
-    # vérifies les enchères en cours
-    to_ignore: set[int] = set()
-    for id in auction_timers.keys():
-        auction_timers[id] -= dt
-
-        if auction_timers[id] <= 0:
-            #to_ignore.add(auction_id) # if it's already in to_ignore anyway, because every element in a set is unique, nothing happens here
-            to_ignore.add(id) # if it's already in to_ignore anyway, because every element in a set is unique, nothing happens here
-
     u: User | None = find_user(sock)
 
     if u:
-        u.last_activity = now
+        u.last_activity = time.time()
         u.missed_pings = 0
 
     # PING <ts> : keep-alive (autorisé même si non authentifié)
@@ -114,7 +115,7 @@ def handle_command(sock: socket.socket, line: str) -> None:
             return
         ts = parts[1]
         if u:
-            u.last_activity = now
+            u.last_activity = time.time()
             u.missed_pings = 0
         send_line(sock, "PONG %s", ts)
         return
@@ -168,10 +169,10 @@ def handle_command(sock: socket.socket, line: str) -> None:
         send_line(sock, "HELP available commands:")
         send_line(sock, "  SPEAK <msg>: send a message")
         send_line(sock, "  LSMEM: list connected users")
-        send_line(sock, "  CREAT: put up an auction")
+        send_line(sock, "  CREAT <auction_name> <min_price> <increment> <duration_sec>: put up an auction")
         send_line(sock, "  LSAUC: list all running auctions")
-        send_line(sock, "  ENTER: enter an auction")
-        send_line(sock, "  BID: make a bid for a given auction")
+        send_line(sock, "  ENTER <auction_id>: enter an auction")
+        send_line(sock, "  BID <auction_id> <amount>: make a bid for a given auction")
         send_line(sock, "  PING <ts>: keep-alive, server replies PONG <ts>")
         send_line(sock, "  LEAVE: disconnect")
         return
@@ -191,19 +192,46 @@ def handle_command(sock: socket.socket, line: str) -> None:
         print(f"LSMEM requested by {u.pseudo}")
         return
 
-    global auction_id # not strictly necessary, but my typechecker is complaining about the lack of it
+    global auction_id
 
-    if line == 'CREAT': #TODO
-        min_auction: int = 0 #TODO implement setting a minimum auction
+    # CREAT <auction_name> <min_price> <increment> <duration_sec>
+    if line.startswith('CREAT '):
+        parts = line.split()
+        if len(parts) != 5:
+             send_line(sock, "ERROR 10 invalid syntax")
+             return
+
+        name = parts[1]
+        try:
+            min_price = int(parts[2])
+            increment = int(parts[3])
+            duration = int(parts[4])
+        except ValueError:
+            send_line(sock, "ERROR 33 invalid parameters (must be integers)")
+            return
+
+        if not re.fullmatch(r'[a-zA-Z0-9_-]{1,16}', name):
+            send_line(sock, "ERROR 30 invalid auction name")
+            return
+        
+        if min_price < 1 or increment < 1 or duration < 1:
+             send_line(sock, "ERROR 33 invalid parameters (must be positive)")
+             return
 
         auction_id += 1
-        all_auctions[auction_id].append((sock, min_auction))
-        auction_timers[auction_id] = 120.0 # 2 minutes per auction
-        send_line(sock, "TODO création enchère")
+        new_auction = Auction(auction_id, name, min_price, increment, duration, u)
+        auctions[auction_id] = new_auction
+        
+        send_line(sock, "OKAY! %d", auction_id)
+        broadcast("CREAT %d %s %d %d %d", auction_id, name, min_price, increment, duration)
+        print(f"Auction {auction_id} created by {u.pseudo}")
         return
     
-    if line == 'LSAUC': #TODO
-        send_line(sock, "TODO liste enchères")
+    if line == 'LSAUC':
+        active_auctions = [a for a in auctions.values() if a.get_time_left() > 0]
+        send_line(sock, "LSAUC %d", len(active_auctions))
+        for a in active_auctions:
+            send_line(sock, "%d %s %d %d %d", a.id, a.name, a.current_bid, a.get_time_left(), len(a.participants))
         return
 
     if line == 'ENTER': #TODO
@@ -247,6 +275,22 @@ def handle_socket(sock) -> None:
         if line:
             handle_command(sock, line)
 
+# Détecte les enchères finies
+def check_auctions() -> None:
+    """Vérifie les enchères terminées."""
+    to_remove = []
+    for a in auctions.values():
+        if a.get_time_left() <= 0:
+            to_remove.append(a.id)
+            if a.leader:
+                broadcast("WIN %s %d %d", a.leader.pseudo, a.current_bid, a.id)
+            else:
+                broadcast("END %d NO_BIDS", a.id)
+            print(f"Auction {a.id} ended.")
+            
+    for id in to_remove:
+        del auctions[id]
+
 def check_keepalive() -> None:
     """Déconnecte les clients après 5 PING manqués."""
     now = time.time()
@@ -285,5 +329,6 @@ if __name__ == '__main__':
                     else:
                         handle_socket(key.fileobj)
                 check_keepalive()
+                check_auctions()
         except KeyboardInterrupt:
             print("\nArrêt du serveur")
