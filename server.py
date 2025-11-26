@@ -162,7 +162,9 @@ def handle_command(sock: socket.socket, line: str) -> None:
     
     # Vérification de l'authentification pour les commandes suivantes
     if not u or not u.authenticated:
-        return send_line(sock, "ERROR 20 Auth failed.")
+        #return send_line(sock, "ERROR 20 Auth failed.")
+        send_line(sock, "ERROR 20 Auth failed.")
+        return exit(0)
     
     # Help
     if line == 'HELP':
@@ -231,15 +233,45 @@ def handle_command(sock: socket.socket, line: str) -> None:
         active_auctions = [a for a in auctions.values() if a.get_time_left() > 0]
         send_line(sock, "LSAUC %d", len(active_auctions))
         for a in active_auctions:
-            send_line(sock, "%d %s %d %d %d", a.id, a.name, a.current_bid, a.get_time_left(), len(a.participants))
+            send_line(sock, "%d %s %d %d %d %d", a.id, a.name, a.min_price, a.current_bid, a.get_time_left(), len(a.participants))
         return
 
     if line == 'ENTER': #TODO
         send_line(sock, "TODO entrer dans enchère")
         return
     
-    if line == 'BID': #TODO
-        send_line(sock, "TODO faire une offre")
+    if line.startswith('BID '):
+        parts = line.split()
+        if len(parts) != 3:
+            send_line(sock, "ERROR 10 invalid syntax")
+            return
+        try:
+            auc_id = int(parts[1])
+            amount = int(parts[2])
+        except ValueError:
+            send_line(sock, "ERROR 33 invalid parameters (must be integers)")
+            return
+
+        auction = auctions.get(auc_id)
+        if not auction:
+            send_line(sock, "ERROR 31 auction not found")
+            return
+        if auction.get_time_left() <= 0:
+            send_line(sock, "ERROR 39 auction ended")
+            return
+
+        min_required = auction.min_price if auction.current_bid == 0 else auction.current_bid + auction.increment
+        if amount < min_required:
+            send_line(sock, "ERROR 38 bid too low")
+            return
+
+        auction.current_bid = amount
+        auction.leader = u
+        auction.participants.add(u)
+
+        send_line(sock, "OKAY!")
+        pseudo_anon = hashlib.sha256(u.pseudo.encode()).hexdigest()[:8]
+        broadcast("BID %s %d %d", pseudo_anon, amount, auc_id)
         return
     
     
