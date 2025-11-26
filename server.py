@@ -162,9 +162,9 @@ def handle_command(sock: socket.socket, line: str) -> None:
     
     # Vérification de l'authentification pour les commandes suivantes
     if not u or not u.authenticated:
-        #return send_line(sock, "ERROR 20 Auth failed.")
         send_line(sock, "ERROR 20 Auth failed.")
-        return exit(0)
+        disconnect(sock)
+        return
     
     # Help
     if line == 'HELP':
