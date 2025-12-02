@@ -23,6 +23,11 @@ Attention Exit =/= LEAVE (quitter l'enchère vs quitter le serveur)
 - clt: SIGN <pseudo> <pwd_hash> <pubkey>
 - srv: OKAY! | ERROR 41
 
+### Echange de clefs
+- clt: HELLO
+- srv: RSAKEY <pubRSAkey>
+- clt: AESKEY <pubRSAkey> <AESkey (RSA-enc)> | ERROR 99
+
 ### Auth - vérif MDP avec authentification():
 - clt: HELLO <pseudo>
 - srv: CHALL <nonce_int> # faire un challenge nonce en int en hexadécimal (pas encore d'idée de quoi choisir comme nonce)
@@ -105,3 +110,4 @@ ERROR 43: clé publique invalide (si utilisée)
 ERROR 45: trop de requêtes (rate limit)
 ERROR 47: version non supportée
 ERROR 48: erreur interne
+ERROR 99: protocole non suivi

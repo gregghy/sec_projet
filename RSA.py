@@ -14,8 +14,7 @@ class RSA():
 		A return value of False means n is certainly not prime. A return value of
 		True means n is very likely a prime.
 		"""
-
-		checks = [2, 3, 5, 7, 11, 13, 17, 19, 23]
+		
 		trials = 8
 
 		def trial_composite(a) -> bool:
@@ -27,11 +26,6 @@ class RSA():
 			return True
 
 		# Miller-Rabin test for primes
-		if n in checks:
-			return True
-		elif n < checks[-1]:
-			return False
-
 		s = 0
 		d = n - 1
 		while d % 2 == 0:
