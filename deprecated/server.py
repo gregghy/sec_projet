@@ -5,11 +5,27 @@ import sys
 import re
 import RSA
 import hashlib # for hashing passwords later. probably use sha256.
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes # AES
 import time
+from os import urandom
 
 MAX_LINE: int = 256
 PING_INTERVAL: float = 15.0
 MAX_MISSED_PINGS: int = 5
+RSA_KEY_SIZE: int = 256
+rsakeys: RSA.RSA = RSA.RSA(bits = RSA_KEY_SIZE)
+
+AES_KEY_SIZE: int = 32
+AES_IV_SIZE: int = 16
+AES_BLOCK_SIZE: int = 64
+AES: Cipher
+
+encryptor = None
+decryptor = None
+padder = padding.PKCS7(block_size = AES_BLOCK_SIZE).padder()
+unpadder = padding.PKCS7(block_size = AES_BLOCK_SIZE).unpadder()
 
 class User:
     def __init__(self, sock: socket.socket, username: str, password) -> None:
@@ -53,6 +69,10 @@ def send_line(sock: socket.socket, msg: str, *args) -> None:
         sock.sendall(line.encode())
     except (BrokenPipeError, OSError):
         pass
+
+def send_line_aes(sock: socket.socket, msg: str, *args) -> None:
+    #TODO
+    return
 
 def accept_wrapper(lsock) -> None:
     """Accepte une nouvelle connexion"""
@@ -98,6 +118,10 @@ def find_user(sock: socket.socket) -> User | None:
             return u
     return None
 
+def read_line_aes(sock: socket.socket, msg: str, *args) -> None:
+    #TODO
+    return
+
 def handle_command(sock: socket.socket, line: str) -> None:
     """vérifie les enchères disponibles et traite une commande reçue d'un client"""
     
@@ -120,14 +144,35 @@ def handle_command(sock: socket.socket, line: str) -> None:
         send_line(sock, "PONG %s", ts)
         return
     
+    if line.startswith('AESKEY'):
+        parts: list[str] = line[len("HELLO") + 1:].split()
+        if len(parts) < 4:
+            print("ERROR 99 Server did not follow protocol (keyexchange).")
+            return
+        clientRSA: tuple[int, int] = (int(parts[0]), int(parts[1]))
+        clientCipertext: tuple[int, int] = (int(parts[2]), int(parts[3]))
+        plaintext: list[str] = rsakeys.dec(clientRSA, clientCipertext).split()
+        AES_KEY, AES_IV = bytes(int(plaintext[0])), bytes(int(plaintext[1]))
+
+        AES = Cipher(
+            algorithm = algorithms.AES(AES_KEY),
+            mode = modes.CBC(AES_IV),
+            backend = default_backend()
+        )
+        encryptor = AES.encryptor()
+        decryptor = AES.decryptor()
+
     # HELLO <pseudo> <password> : authentification
-    if line.startswith('HELLO '):
-        parts: list[str] = line[6:].split()
+    # HELLO : échange de clefs
+    if line.startswith('HELLO'):
+        parts: list[str] = line[len("HELLO") + 1:].split()
         if len(parts) < 1:
-            return send_line(sock, "ERROR 40 Invalid username.")
+            pub: tuple[int, int] = rsakeys.getPublicKey()
+            msg = "RSAKEY " + str(pub[0]) + " " + str(pub[1])
+            return send_line(sock, msg)
         
         pseudo: str = parts[0]
-        password = hashlib.sha256(bytes(parts[1], encoding = "utf-8")) if len(parts) > 1 else None #TODO
+        password = hashlib.sha256(bytes(parts[1], encoding = "utf-8")) if len(parts) > 1 else None
         
         if password is None:
             send_line(sock, "Please enter a password.")
@@ -234,10 +279,6 @@ def handle_command(sock: socket.socket, line: str) -> None:
         send_line(sock, "LSAUC %d", len(active_auctions))
         for a in active_auctions:
             send_line(sock, "%d %s %d %d %d %d", a.id, a.name, a.min_price, a.current_bid, a.get_time_left(), len(a.participants))
-        return
-
-    if line == 'ENTER': #TODO
-        send_line(sock, "TODO entrer dans enchère")
         return
     
     if line.startswith('BID '):

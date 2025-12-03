@@ -25,10 +25,30 @@
       "item": "test2",
       "description": "adskl",
       "seller": "gregghy",
-      "highest_bid": 399,
+      "highest_bid": 54398732894432,
       "highest_bidder": "gregghy",
       "status": "open",
-      "time_remaining": 2921
+      "time_remaining": 2151
+    },
+    {
+      "id": "auc_1764674693671",
+      "item": "thibe",
+      "description": "aldkfjas",
+      "seller": "gregghy",
+      "highest_bid": 34,
+      "highest_bidder": "gregghy",
+      "status": "closed",
+      "time_remaining": 0
+    },
+    {
+      "id": "auc_1764686855711",
+      "item": "tests",
+      "description": "adfas",
+      "seller": "gregghy",
+      "highest_bid": 2874529848759823400,
+      "highest_bidder": "gregghy",
+      "status": "open",
+      "time_remaining": 83
     }
   ]
 }

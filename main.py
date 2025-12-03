@@ -11,7 +11,7 @@ import hashlib
 import os
 import uuid
 import base64
-from Crypto.PublicKey import RSA
+from RSA import RSA as CustomRSA
 from Crypto.Cipher import AES, PKCS1_v1_5
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
@@ -31,9 +31,46 @@ DATA_FILE = "data.json"
 
 #Sec
 
-key = RSA.generate(2048)
-private_key = key
-public_key = key.publickey()
+# Custom RSA Key Generation
+custom_rsa = CustomRSA(1024)
+(e, n) = custom_rsa.public
+
+#DER Encoder for RSA Public Key
+def encode_length(length):
+    if length < 128:
+        return bytes([length])
+    else:
+        length_bytes = length.to_bytes((length.bit_length() + 7) // 8, 'big')
+        return bytes([0x80 | len(length_bytes)]) + length_bytes
+
+def encode_integer(int_val):
+    val_bytes = int_val.to_bytes((int_val.bit_length() + 7) // 8, 'big')
+    if val_bytes[0] & 0x80:
+        val_bytes = b'\x00' + val_bytes
+    return b'\x02' + encode_length(len(val_bytes)) + val_bytes
+
+def encode_sequence(content):
+    return b'\x30' + encode_length(len(content)) + content
+
+def encode_bitstring(content):
+    return b'\x03' + encode_length(len(content) + 1) + b'\x00' + content
+
+def export_public_key_pem(n, e):
+    rsa_public_key = encode_sequence(encode_integer(n) + encode_integer(e))
+    
+    alg_id = b'\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01\x05\x00'
+    
+    spki = encode_sequence(alg_id + encode_bitstring(rsa_public_key))
+    
+    b64_spki = base64.b64encode(spki).decode('utf-8')
+    
+    pem_lines = ["-----BEGIN PUBLIC KEY-----"]
+    for i in range(0, len(b64_spki), 64):
+        pem_lines.append(b64_spki[i:i+64])
+    pem_lines.append("-----END PUBLIC KEY-----")
+    return "\n".join(pem_lines)
+
+public_key_pem = export_public_key_pem(n, e)
 
 SESSIONS: Dict[str, bytes] = {}
 
@@ -165,7 +202,7 @@ def encrypt_data(data: Any, aes_key: bytes) -> str:
 
 @app.get("/public-key")
 def get_public_key():
-    return {"key": public_key.export_key().decode('utf-8')}
+    return {"key": public_key_pem}
 
 class HandshakeRequest(BaseModel):
     encrypted_key: str
@@ -174,14 +211,28 @@ class HandshakeRequest(BaseModel):
 def handshake(req: HandshakeRequest):
     try:
         enc_key = base64.b64decode(req.encrypted_key)
-        cipher_rsa = PKCS1_v1_5.new(private_key)
-        sentinel = get_random_bytes(16)
-        decrypted_blob = cipher_rsa.decrypt(enc_key, sentinel)
         
+        #RSA Raw Decryption
+        c_int = int.from_bytes(enc_key, 'big')
+        (d, n) = custom_rsa.private
+        m_int = pow(c_int, d, n)
+        
+        key_length_bytes = (n.bit_length() + 7) // 8
+        decrypted_block = m_int.to_bytes(key_length_bytes, 'big')
+        
+        #PKCS#1 v1.5 Unpadding
+        #00 02 [padding] 00 [aes_key]
         try:
-            aes_key = base64.b64decode(decrypted_blob)
-        except:
-            aes_key = decrypted_blob
+            sep_index = decrypted_block.find(b'\x00', 2)
+            if sep_index == -1:
+                raise Exception("Padding error: separator not found")
+            
+            aes_key_bytes = decrypted_block[sep_index+1:]
+            aes_key = base64.b64decode(aes_key_bytes)
+            
+        except Exception as e:
+            print(f"Unpadding/Decoding error: {e}")
+            raise HTTPException(status_code=400, detail="Handshake failed")
 
         if len(aes_key) not in [16, 24, 32]:
              pass
