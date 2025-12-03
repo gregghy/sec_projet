@@ -526,7 +526,7 @@ export default function AuctionPlatform() {
     initSession();
   }, []);
 
-  const api = session ? createApiClient(session) : null;
+  const api = React.useMemo(() => session ? createApiClient(session) : null, [session]);
 
   const fetchAuctions = async () => {
     if (!api) return;
