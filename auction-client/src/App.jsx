@@ -4,8 +4,8 @@ import JSEncrypt from 'jsencrypt';
 import CryptoJS from 'crypto-js';
 
 //API CONFIG
-const API_URL = 'https://localhost:8000';
-const WS_URL = 'wss://localhost:8000/ws';
+const API_URL = 'https://auction-platform-avwc.onrender.com';
+const WS_URL = 'wss://auction-platform-avwc.onrender.com/ws';
 
 //Sec help funcitons
 
