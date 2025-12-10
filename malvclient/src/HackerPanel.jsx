@@ -107,26 +107,40 @@ const HackerPanel = ({ api, isOpen, onClose }) => {
   };
 
   const runBruteForce = async () => {
-    const targetUser = prompt("Enter username to crack:", "admin");
+    const targetUser = prompt("Enter username to crack: ", "admin");
     if (!targetUser) return;
 
-    const commonPasswords = ["123456", "password", "12345678", "admin", "secret", "root", "user", "1234", "auction", "qwerty"];
-    addLog(`Starting Brute Force on '${targetUser}'...`);
+    let password = prompt("Enter a start password if you have an idea. Enter a ! otherwise", "!");
+    if (!password) return;
 
-    for (const password of commonPasswords) {
-        try {
-            const passwordHash = CryptoJS.SHA256(password).toString();
-            await api.post('/login', { username: targetUser, password: passwordHash });
-            
-            addLog(`CRACKED! Password: "${password}"`);
-            alert(`Match found!\nUser: ${targetUser}\nPass: ${password}`);
-            return;
-        } catch (e) {
-            addLog(`Failed: ${password}`);
+    let passwords = [password];
+    let i = 0;
+
+    while (passwords[i]) {
+      try {
+        const passwordHash = CryptoJS.SHA256(passwords[i]).toString();
+        await api.post('/login', { username: targetUser, password: passwordHash });
+
+        addLog(`CRACKED! Password: "${passwords[i]}"`);
+        alert(`Match found!\nUser: ${targetUser}\nPass: ${passwords[i]}`);
+        return;
+      } catch (e) {
+        addLog(`Failed: ${passwords[i]}`);
+        let pass = passwords[i];
+        i += 1;
+        let pass1;
+        let lastCharCode = pass.charCodeAt(pass.length - 1);
+        if (lastCharCode !== 127) {
+          pass1 = pass.slice(0, -1) + String.fromCharCode(lastCharCode + 1);
         }
-        await new Promise(r => setTimeout(r, 100));
+
+        let pass2 = pass + String.fromCharCode(33);
+        if (pass1) passwords.push(pass1);
+        passwords.push(pass2);
+      }
+      await new Promise(r => setTimeout(r, 100));
     }
-    addLog(`Failed to crack password.`);
+    addLog("Failed to crack password.");
   };
 
   const runChaosAuction = async () => {
