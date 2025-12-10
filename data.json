@@ -28,6 +28,7 @@
       "highest_bid": 54398732894432,
       "highest_bidder": "gregghy",
       "status": "open",
+      "time_remaining": 2004
       "time_remaining": 2151
     },
     {
@@ -47,6 +48,8 @@
       "seller": "gregghy",
       "highest_bid": 2874529848759823400,
       "highest_bidder": "gregghy",
+      "status": "closed",
+      "time_remaining": 0
       "status": "open",
       "time_remaining": 83
     }

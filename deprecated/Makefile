@@ -3,6 +3,7 @@ CFLAGS = -Wall -Wextra -g
 
 .PHONY: all clean
 
+all: clean server client
 all: clean server client audit_client
 
 # Serveur Python : on copie le script et on le rend exécutable
@@ -15,6 +16,9 @@ client: client.py
 	@cp $< $@
 	@chmod +x $@
 
+
+clean:
+	rm -f server client $(UTILS_OBJ)
 audit_client: audit_client.py
 	@cp $< $@
 	@chmod +x $@
