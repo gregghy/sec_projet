@@ -29,6 +29,7 @@
       "highest_bidder": "gregghy",
       "status": "open",
       "time_remaining": 2004
+      "time_remaining": 2151
     },
     {
       "id": "auc_1764674693671",
@@ -49,6 +50,8 @@
       "highest_bidder": "gregghy",
       "status": "closed",
       "time_remaining": 0
+      "status": "open",
+      "time_remaining": 83
     }
   ]
 }
