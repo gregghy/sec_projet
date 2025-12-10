@@ -1,0 +1,54 @@
+{
+  "users": [
+    {
+      "username": "alice",
+      "password": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f"
+    },
+    {
+      "username": "gregghy",
+      "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
+    }
+  ],
+  "auctions": [
+    {
+      "id": "auc_1764587522042",
+      "item": "test_auction_button",
+      "description": "askdfjfsdkl",
+      "seller": "gregghy",
+      "highest_bid": 43,
+      "highest_bidder": "gregghy",
+      "status": "closed",
+      "time_remaining": 0
+    },
+    {
+      "id": "auc_1764673380127",
+      "item": "test2",
+      "description": "adskl",
+      "seller": "gregghy",
+      "highest_bid": 54398732894432,
+      "highest_bidder": "gregghy",
+      "status": "open",
+      "time_remaining": 2151
+    },
+    {
+      "id": "auc_1764674693671",
+      "item": "thibe",
+      "description": "aldkfjas",
+      "seller": "gregghy",
+      "highest_bid": 34,
+      "highest_bidder": "gregghy",
+      "status": "closed",
+      "time_remaining": 0
+    },
+    {
+      "id": "auc_1764686855711",
+      "item": "tests",
+      "description": "adfas",
+      "seller": "gregghy",
+      "highest_bid": 2874529848759823400,
+      "highest_bidder": "gregghy",
+      "status": "open",
+      "time_remaining": 83
+    }
+  ]
+}
