@@ -27,8 +27,8 @@
       "seller": "gregghy",
       "highest_bid": 54398732894432,
       "highest_bidder": "gregghy",
-      "status": "open",
-      "time_remaining": 2151
+      "status": "closed",
+      "time_remaining": 0
     },
     {
       "id": "auc_1764674693671",
@@ -47,8 +47,18 @@
       "seller": "gregghy",
       "highest_bid": 2874529848759823400,
       "highest_bidder": "gregghy",
-      "status": "open",
-      "time_remaining": 83
+      "status": "closed",
+      "time_remaining": 0
+    },
+    {
+      "id": "auc_1765562444460",
+      "item": "Test Item",
+      "description": "something something",
+      "seller": "gregghy",
+      "highest_bid": 1000,
+      "highest_bidder": "gregghy",
+      "status": "closed",
+      "time_remaining": 0
     }
   ]
 }
