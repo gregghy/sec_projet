@@ -4,7 +4,7 @@ import JSEncrypt from 'jsencrypt';
 import CryptoJS from 'crypto-js';
 
 //API CONFIG
-const API_URL = 'https://localhost:8000';
+const API_URL = 'http://localhost:8000';
 const WS_URL = 'wss://localhost:8000/ws';
 
 //Sec help funcitons
